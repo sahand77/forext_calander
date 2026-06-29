@@ -1,0 +1,36 @@
+services:
+  api:
+    build: .
+    ports:
+      - "${FOREXFACTORY_API_PORT:-8000}:8000"
+    environment:
+      FOREXFACTORY_CSV_PATH: /data/forex_factory_cache.csv
+      FOREXFACTORY_TZ: ${FOREXFACTORY_TZ:-Asia/Tehran}
+      FOREXFACTORY_API_HOST: 0.0.0.0
+      FOREXFACTORY_API_PORT: 8000
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  scraper:
+    profiles:
+      - scraper
+    build: .
+    environment:
+      FOREXFACTORY_CSV_PATH: /data/forex_factory_cache.csv
+      FOREXFACTORY_TZ: ${FOREXFACTORY_TZ:-Asia/Tehran}
+    volumes:
+      - ./data:/data
+    command:
+      - python
+      - -m
+      - src.forexfactory.main
+      - --start
+      - ${SCRAPE_START:-2026-06-23}
+      - --end
+      - ${SCRAPE_END:-2026-06-29}
+      - --csv
+      - /data/forex_factory_cache.csv
+      - --tz
+      - ${FOREXFACTORY_TZ:-Asia/Tehran}
+      - --details

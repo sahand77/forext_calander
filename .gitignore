@@ -9,6 +9,7 @@ venv
 .venv/
 .pytest_cache/
 __pycache__/
+data/*.csv
 # Python cache files
 *.pyc
 *.pyo

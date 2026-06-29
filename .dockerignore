@@ -1,0 +1,13 @@
+.venv
+venv
+.idea
+.git
+.gitignore
+__pycache__
+.pytest_cache
+*.pyc
+*.pyo
+debug
+tests
+*.csv
+data
