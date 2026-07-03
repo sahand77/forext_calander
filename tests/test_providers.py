@@ -30,6 +30,12 @@ CALENDAR_HTML = """
   <td class="calendar__forecast">0.8%</td>
   <td class="calendar__previous">0.7%</td>
 </tr>
+<tr class="calendar__row calendar__row--grey">
+  <td class="calendar__time">All Day</td>
+  <td class="calendar__currency">USD</td>
+  <td class="calendar__impact"><span class="icon icon--ff-impact-gra"></span></td>
+  <td class="calendar__event">Bank Holiday</td>
+</tr>
 </table>
 """
 
@@ -80,6 +86,12 @@ def test_html_calendar_parsing():
     assert rows[0]["event"] == "Test Event"
     assert rows[0]["detail_url"].endswith("/calendar/1-test-event")
 
+    holiday = rows[1]
+    assert holiday["event"] == "Bank Holiday"
+    assert holiday["impact"] == "Non-Economic"
+    assert holiday["time"] == "All Day"
+    assert holiday["datetime_local"] == datetime(2025, 4, 7, tzinfo=tz).isoformat()
+
 
 def test_saved_html_provider(tmp_path):
     path = tmp_path / "calendar.html"
@@ -89,5 +101,6 @@ def test_saved_html_provider(tmp_path):
 
     rows = provider.fetch_events(datetime(2025, 4, 7, tzinfo=tz), datetime(2025, 4, 7, tzinfo=tz), "Asia/Tehran")
 
-    assert len(rows) == 1
+    assert len(rows) == 2
     assert rows[0]["source"] == "forexfactory-html"
+    assert rows[1]["event"] == "Bank Holiday"

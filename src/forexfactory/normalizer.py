@@ -32,15 +32,23 @@ def clean(value) -> str:
     return "" if value is None else str(value).strip()
 
 
+def _is_all_day_time(value: str) -> bool:
+    return clean(value).lower() == "all day"
+
+
 def parse_event_datetime(value: str | None, tzname: str, *, date_value: str | None = None, time_value: str | None = None) -> datetime | None:
     tz = gettz(tzname)
     text = clean(value)
+    time_text = clean(time_value)
     try:
+        if _is_all_day_time(time_text) and clean(date_value):
+            day = date_parser.parse(clean(date_value)).date()
+            return datetime(day.year, day.month, day.day, tzinfo=tz)
         if text:
             dt = date_parser.parse(text)
         elif date_value:
             date_text = clean(date_value)
-            time_text = clean(time_value) or "12:00am"
+            time_text = time_text or "12:00am"
             dt = date_parser.parse(f"{date_text} {time_text}")
         else:
             return None
@@ -57,16 +65,17 @@ def normalize_event(raw: dict, tzname: str, default_source: str = "") -> dict:
     datetime_value = raw.get("datetime") or raw.get("date_iso") or raw.get("DateTime")
     if not datetime_value and "T" in clean(raw_date):
         datetime_value = raw_date
+    raw_time = clean(raw.get("time") or raw.get("Time"))
     dt = parse_event_datetime(
         datetime_value,
         tzname,
         date_value=raw_date,
-        time_value=raw.get("time") or raw.get("Time"),
+        time_value=raw_time,
     )
     datetime_local = dt.isoformat() if dt else clean(raw.get("datetime_local"))
     datetime_utc = dt.astimezone(timezone.utc).isoformat() if dt else clean(raw.get("datetime_utc"))
     date = dt.date().isoformat() if dt else clean(raw.get("date") or raw.get("Date"))
-    time = dt.strftime("%H:%M:%S") if dt else clean(raw.get("time") or raw.get("Time"))
+    time = raw_time if _is_all_day_time(raw_time) else (dt.strftime("%H:%M:%S") if dt else raw_time)
 
     currency = clean(raw.get("currency") or raw.get("country") or raw.get("Country") or raw.get("Currency")).upper()
     impact = clean(raw.get("impact") or raw.get("Impact"))
